@@ -1,0 +1,105 @@
+def click_event(event, x, y, flags, params):
+    # checking for left mouse clicks
+    if event == cv2.EVENT_LBUTTONDOWN:
+        # displaying the coordinates
+        # on the Shell
+        print(x, ' ', y)
+
+        # displaying the coordinates
+        # on the image window
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(image, str(x) + ',' +
+                    str(y), (x, y), font,
+                    1, (255, 0, 0), 2)
+        cv2.imshow('image', image)
+
+    # checking for right mouse clicks
+    if event == cv2.EVENT_RBUTTONDOWN:
+        # displaying the coordinates
+        # on the Shell
+        print(x, ' ', y)
+        print(image[x][y])
+        # displaying the coordinates
+        # on the image window
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        b = image[y, x, 0]
+        g = image[y, x, 1]
+        r = image[y, x, 2]
+        cv2.putText(image, str(b) + ',' +
+                    str(g) + ',' + str(r),
+                    (x, y), font, 1,
+                    (255, 255, 0), 2)
+        cv2.imshow('image', image)
+
+high_thresh = 200
+lowThresh = 100
+
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#cv2.imshow('gray', gray)
+cv2.imwrite('gray.jpg', gray)
+ret,thresh = cv2.threshold(image,127,255,cv2.THRESH_BINARY)
+#cv2.imshow('thresh', thresh)
+cv2.imwrite('thresh.jpg', thresh)
+
+image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+lower_blue = np.array([126, 140, 136])
+upper_blue = np.array([128, 142, 138])
+mask_blue = cv2.inRange(image_rgb, lower_blue, upper_blue)
+mask_white = cv2.inRange(gray, 200, 255)
+mask = cv2.bitwise_and(gray, mask_blue)
+#res = cv2.bitwise_and(frame,frame, mask= mask_blue)
+cv2.imwrite('blue.jpg', mask_blue)
+cv2.imwrite('mask.jpg', mask)
+sigma = 0.33
+v = np.median(mask)
+lower = int(max(0, (1.0 - sigma) * v))
+upper = int(min(255, (1.0 + sigma) * v))
+
+edges = cv2.Canny(mask, lower, upper, apertureSize = 3, L2gradient = True)
+#edges = cv2.Canny(thresh, lowThresh, high_thresh, apertureSize = 3, L2gradient = True)
+cv2.imwrite('edges.jpg', edges)
+#cv2.imshow('edges', edges)
+
+lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength=5,maxLineGap=40)
+
+circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1.2, 75, param1 = 15, param2 = 50, minRadius = 1, maxRadius = 100)
+
+lines_list = []
+
+for line in lines:
+    x1,y1,x2,y2 = line[0]
+    cv2.line(image,(x1,y1),(x2,y2),(0,255,0),2)
+    lines_list.append([(x1, y1), (x2, y2)])
+
+circles = np.uint16(np.around(circles))
+for i in circles[0,:]:
+    # draw the outer circle`
+    #cv2.circle(image,(i[0],i[1]),i[2],(0,255,0),2)
+    # draw the center of the circle
+    #cv2.circle(image,(i[0],i[1]),2,(0,0,255),3)
+    __ = 2
+
+cv2.imwrite('houghlines3.jpg',image)
+
+color = (255, 215, 0)
+thickness = -1
+# Going through every contours found in the image.
+
+
+xborder, yborder, c = image.shape
+print(xborder,yborder)
+
+
+
+print('End')
+
+cv2.imshow('image', image)
+#cv2.imshow('gray', gray)
+#cv2.imshow('thresh', thresh)
+
+cv2.setMouseCallback('image', click_event)
+
+cv2.waitKey(0)
+
+cv2.destroyAllWindows()
+
